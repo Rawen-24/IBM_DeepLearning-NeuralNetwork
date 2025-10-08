@@ -1,0 +1,42 @@
+Personal Note – Neural Networks: Current Knowledge, Open Questions, and Thoughts
+Author: Rawen Jendoubi — 08/10/2025
+
+Neural networks in AI are inspired by how biological brain cells (neurons) interact with each other. From what I remember from biology, neurons receive external stimuli, send signals through dendrites to the soma, and then to the axon. I find it interesting to think about what analogy we can make between this process and artificial intelligence — more specifically, machine learning.
+
+In AI, a neural network is made up of three layers:
+- Input Layer
+- Hidden Layer(s)
+- Output Layer
+
+When we feed an input (our dataset) into the network — which could be image pixels, numeric vectors, or CSV data — the neuron computes a weighted sum:
+z = w * x + b
+Here, x is a vector of input features, w are the corresponding weights, and b is the bias.
+- The weights (w) control how strongly each input influences the neuron’s output.
+- The bias (b) shifts the activation threshold, deciding when the neuron “activates.”
+
+After computing z, the value is passed through an activation function.
+
+Function | Formula | Output Range | When Used | Intuition
+------------------------------------------------------------
+ReLU (Rectified Linear Unit) | f(z) = max(0, z) | [0, inf) | Common for hidden layers | Keeps positives, sets negatives to 0 — simple and efficient
+
+So far, I’ve mainly tested ReLU to understand its effect, but I plan to experiment with other functions like Sigmoid, Tanh, Leaky ReLU, and Softmax. Each is suited for different layers and types of problems.
+
+For example, in my XOR experiment (in my private MPI_Workspace repo), I used ReLU between the input and hidden layers, and a Sigmoid function for the output layer. This detail matters a lot — the activation choice directly impacts training performance.
+
+After the forward pass, we perform backpropagation to compute how much each weight and bias contributed to the total error. This involves taking partial derivatives of the loss function using the chain rule of calculus:
+∂L/∂w, ∂L/∂b
+Then, using gradient descent, we update these parameters. The learning rate (α) defines the step size — a small α helps the model converge slowly but steadily, while a large one may overshoot the optimal values.
+
+Now to my main question: how can I add parallel computing here?
+Should I apply model parallelism (dividing neurons or layers across processes) or data parallelism (dividing the dataset between processes)?
+
+With MPI, my current plan is to use data parallelism — distributing parts of the dataset using MPI_Scatter, processing locally (including activation functions), and then combining results from all processes using MPI_Allgather or MPI_Allreduce. I’ll need to pay close attention to offsets, memory addresses, and synchronization between local computations. The final output layer neurons will gather the local data, and the root processor can handle global updates.
+
+So far, these are my thoughts and what I understand — or at least what I think I will go through next.
+There’s still a lot of room for improvement:
+- Choosing the right dataset to start with.
+- Experimenting with the number of layers, neurons, and activation functions.
+- Measuring scalability (MFLOPs), compiler effects, and optimization techniques.
+
+This note is just a snapshot of my current understanding and direction for my work on Backpropagation on CPUs using MPI — more to come as I keep testing and refining.
